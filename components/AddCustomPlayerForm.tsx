@@ -15,8 +15,8 @@ export function AddCustomPlayerForm({
   const [slg, setSlg] = useState("");
   const [batSide, setBatSide] = useState("R");
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
     if (!name.trim()) return;
     onAdd({
       id: `custom-${nanoid()}`,
@@ -34,56 +34,65 @@ export function AddCustomPlayerForm({
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="mt-2 rounded-lg border border-stone-200 bg-white p-3 dark:border-stone-700 dark:bg-stone-900"
-    >
-      <input
-        type="text"
-        placeholder="Name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        className="mb-2 w-full rounded border border-stone-300 px-2 py-1.5 text-sm dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
-        required
-      />
-      <div className="mb-2 flex gap-2">
+    <form onSubmit={handleSubmit} className="mt-3 space-y-2 rounded-2xl border border-ink-950/10 bg-ink-950/[0.03] p-3 dark:border-white/10 dark:bg-white/[0.04]">
+      <label className="block text-xs font-semibold uppercase tracking-wider text-ink-900/50 dark:text-chalk/50">
+        Name
         <input
           type="text"
-          placeholder="Pos (e.g. SS, 1B)"
-          value={positions}
-          onChange={(e) => setPositions(e.target.value)}
-          className="w-24 rounded border border-stone-300 px-2 py-1.5 text-sm dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
+          placeholder="Player name"
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          className="field mt-1 normal-case tracking-normal"
+          required
         />
-        <select
-          value={batSide}
-          onChange={(e) => setBatSide(e.target.value)}
-          className="rounded border border-stone-300 px-2 py-1.5 text-sm dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
-        >
-          <option value="R">R</option>
-          <option value="L">L</option>
-          <option value="S">S</option>
-        </select>
+      </label>
+      <div className="grid grid-cols-[1fr_auto] gap-2">
+        <label className="block text-xs font-semibold uppercase tracking-wider text-ink-900/50 dark:text-chalk/50">
+          Position
+          <input
+            type="text"
+            placeholder="SS, 1B"
+            value={positions}
+            onChange={(event) => setPositions(event.target.value)}
+            className="field mt-1 normal-case tracking-normal"
+          />
+        </label>
+        <label className="block text-xs font-semibold uppercase tracking-wider text-ink-900/50 dark:text-chalk/50">
+          Bats
+          <select
+            value={batSide}
+            onChange={(event) => setBatSide(event.target.value)}
+            className="field mt-1"
+          >
+            <option value="R">R</option>
+            <option value="L">L</option>
+            <option value="S">S</option>
+          </select>
+        </label>
       </div>
-      <div className="mb-2 flex gap-2">
-        <input
-          type="text"
-          placeholder="OBP (e.g. .350)"
-          value={obp}
-          onChange={(e) => setObp(e.target.value)}
-          className="w-20 rounded border border-stone-300 px-2 py-1.5 text-sm dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
-        />
-        <input
-          type="text"
-          placeholder="SLG (e.g. .450)"
-          value={slg}
-          onChange={(e) => setSlg(e.target.value)}
-          className="w-20 rounded border border-stone-300 px-2 py-1.5 text-sm dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
-        />
+      <div className="grid grid-cols-2 gap-2">
+        <label className="block text-xs font-semibold uppercase tracking-wider text-ink-900/50 dark:text-chalk/50">
+          OBP
+          <input
+            type="text"
+            placeholder=".350"
+            value={obp}
+            onChange={(event) => setObp(event.target.value)}
+            className="field mt-1 normal-case tracking-normal"
+          />
+        </label>
+        <label className="block text-xs font-semibold uppercase tracking-wider text-ink-900/50 dark:text-chalk/50">
+          SLG
+          <input
+            type="text"
+            placeholder=".450"
+            value={slg}
+            onChange={(event) => setSlg(event.target.value)}
+            className="field mt-1 normal-case tracking-normal"
+          />
+        </label>
       </div>
-      <button
-        type="submit"
-        className="rounded bg-diamond-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-diamond-700 dark:bg-diamond-500 dark:hover:bg-diamond-600"
-      >
+      <button type="submit" className="btn-primary w-full">
         Add player
       </button>
     </form>

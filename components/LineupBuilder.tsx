@@ -179,151 +179,184 @@ export function LineupBuilder({
   }, [lineupId, fetchScore]);
 
   const playerMap = new Map(effectiveRoster.map((p) => [p.id, p]));
+  const battersFilled = battingOrder.filter(Boolean).length;
+  const positionsFilled = Object.values(positions).filter(Boolean).length;
+  const assignedIds = [...battingOrder, ...Object.values(positions)].filter(Boolean);
 
   const selectedSlotLabel = selectedSlot
     ? selectedSlot.startsWith("bat-")
-      ? `Batting #${parseInt(selectedSlot.replace("bat-", ""), 10) + 1}`
-      : `Position ${selectedSlot.replace("pos-", "")}`
+      ? `batting #${parseInt(selectedSlot.replace("bat-", ""), 10) + 1}`
+      : selectedSlot.replace("pos-", "")
     : "";
 
   return (
-    <div className="grid gap-8 lg:grid-cols-3">
-      <div className="lg:col-span-2 space-y-6">
-        <section>
-          <h2 className="mb-3 text-lg font-semibold text-stone-900 dark:text-stone-100">
-            Batting order
-          </h2>
-          <p className="mb-2 text-sm text-stone-500 dark:text-stone-400">
-            Click a slot to select it, then click a player in the roster (or use the picker below) to assign.
-          </p>
-          <BattingOrderList
-            battingOrder={battingOrder}
-            playerMap={playerMap}
-            selectedSlot={selectedSlot}
-            onSelectSlot={(id) => setSelectedSlot(id as SlotId)}
-            onClearSlot={clearSlot}
-          />
-        </section>
-        <section>
-          <h2 className="mb-3 text-lg font-semibold text-stone-900 dark:text-stone-100">
-            Field positions
-          </h2>
-          <PositionGrid
-            positions={positions}
-            playerMap={playerMap}
-            selectedSlot={selectedSlot}
-            onSelectSlot={(id) => setSelectedSlot(id as SlotId)}
-            onClearSlot={clearSlot}
-          />
-          <div className="mt-4">
-            <FieldView positions={positions} playerMap={playerMap} />
-          </div>
-        </section>
-        {selectedSlot && (
-          <div className="rounded-lg border border-diamond-200 bg-diamond-50/50 p-3 dark:border-diamond-700 dark:bg-diamond-950/30">
-            <PlayerPicker
-              roster={effectiveRoster}
-              label={`Assign player to ${selectedSlotLabel}`}
-              onSelect={handleSelectPlayer}
-              onCancel={() => setSelectedSlot(null)}
-            />
-          </div>
-        )}
-        {lineupId && (
-          <section>
-            <h2 className="mb-3 text-lg font-semibold text-stone-900 dark:text-stone-100">
-              Season simulation
-            </h2>
-            <SimulatePanel lineupId={lineupId} />
-          </section>
-        )}
-        {(score != null || lineupId || scoreError) && (
-          <div className="rounded-lg border border-stone-200 bg-white p-4 dark:border-stone-700 dark:bg-stone-900">
-            <h3 className="text-sm font-medium text-stone-700 dark:text-stone-300">
+    <div className="space-y-6">
+      <section className="overflow-hidden rounded-3xl bg-ink-950 text-chalk shadow-card">
+        <div className="flex flex-wrap items-end justify-between gap-4 px-5 py-5 sm:px-6">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/55">
               Lineup score
-            </h3>
+            </p>
             {scoreLoading ? (
-              <p className="mt-1 text-stone-500 dark:text-stone-400">Loading…</p>
-            ) : scoreError ? (
-              <div className="mt-2 rounded border border-amber-200 bg-amber-50 p-2 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
-                {scoreError}
-              </div>
+              <p className="mt-2 font-display text-5xl leading-none">Scoring</p>
             ) : score != null ? (
-              <p className="mt-1 text-lg font-semibold text-stone-900 dark:text-stone-100">
-                {score.lineupScore.toFixed(1)}
+              <div className="mt-2 flex flex-wrap items-end gap-x-4 gap-y-1">
+                <p className="font-display text-6xl leading-none tabular-nums">
+                  {score.lineupScore.toFixed(1)}
+                </p>
                 {score.runsPerGame != null && (
-                  <span className="ml-2 text-base font-normal text-stone-500 dark:text-stone-400">
-                    ({score.runsPerGame.toFixed(2)} runs/game)
-                  </span>
+                  <p className="pb-1 text-sm text-white/70">
+                    {score.runsPerGame.toFixed(2)} runs / game
+                  </p>
                 )}
+              </div>
+            ) : (
+              <p className="mt-2 max-w-md text-sm leading-relaxed text-white/70">
+                Save the card to score it, then run a thousand seasons.
               </p>
-            ) : lineupId ? (
+            )}
+            {score != null &&
+              score.offense != null &&
+              score.defense != null &&
+              score.baserunning != null && (
+                <p className="mt-3 text-xs uppercase tracking-[0.16em] text-white/55">
+                  Off {score.offense.toFixed(1)}
+                  <span className="mx-2 text-white/25">·</span>
+                  Def {score.defense.toFixed(1)}
+                  <span className="mx-2 text-white/25">·</span>
+                  Run {score.baserunning.toFixed(1)}
+                </p>
+              )}
+            {scoreError && (
+              <p className="mt-3 max-w-xl text-sm text-amber-200">{scoreError}</p>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={handleSave} disabled={saving} className="btn-primary">
+              {saving ? "Saving…" : lineupId ? "Update lineup" : "Save lineup"}
+            </button>
+            {lineupId && (
               <button
                 type="button"
                 onClick={fetchScore}
-                className="mt-1 text-sm text-diamond-600 hover:underline dark:text-diamond-400"
+                disabled={scoreLoading}
+                className="btn-ghost-light"
               >
-                Get score
+                Refresh score
               </button>
-            ) : null}
+            )}
           </div>
-        )}
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving}
-            className="rounded-lg bg-diamond-600 px-4 py-2 font-medium text-white transition hover:bg-diamond-700 disabled:opacity-50 dark:bg-diamond-500 dark:hover:bg-diamond-600"
-          >
-            {saving ? "Saving…" : lineupId ? "Update lineup" : "Save lineup"}
-          </button>
-          {shareSlug && (
+        </div>
+        {shareSlug && (
+          <div className="border-t border-white/10 bg-white px-5 py-4 text-ink-950 dark:bg-ink-900 dark:text-chalk sm:px-6">
             <ShareBlock
               shareSlug={shareSlug}
               copySuccess={copySuccess}
               onCopy={copyShareLink}
               lineupId={lineupId}
             />
-          )}
-          {lineupId && (
+          </div>
+        )}
+      </section>
+
+      <div className={`grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_22rem] ${selectedSlot ? "pb-72 xl:pb-0" : ""}`}>
+        <div className="min-w-0 space-y-6">
+          <section className="surface p-4 sm:p-5">
+            <div className="mb-4 flex items-end justify-between gap-3">
+              <div>
+                <h2 className="section-title">Batting order</h2>
+                <p className="mt-1 text-sm text-ink-900/60 dark:text-chalk/60">
+                  Click a spot, then pick a player from the roster.
+                </p>
+              </div>
+              <p className="font-display text-2xl tabular-nums text-grass-700 dark:text-grass-400">
+                {battersFilled}/9
+              </p>
+            </div>
+            <BattingOrderList
+              battingOrder={battingOrder}
+              positions={positions}
+              playerMap={playerMap}
+              selectedSlot={selectedSlot}
+              onSelectSlot={(id) => setSelectedSlot(id as SlotId)}
+              onClearSlot={(id) => clearSlot(id as SlotId)}
+            />
+          </section>
+
+          <section className="surface p-4 sm:p-5">
+            <div className="mb-4 flex items-end justify-between gap-3">
+              <div>
+                <h2 className="section-title">Defense</h2>
+                <p className="mt-1 text-sm text-ink-900/60 dark:text-chalk/60">
+                  Place the nine, including the pitcher.
+                </p>
+              </div>
+              <p className="font-display text-2xl tabular-nums text-grass-700 dark:text-grass-400">
+                {positionsFilled}/9
+              </p>
+            </div>
+            <FieldView
+              positions={positions}
+              playerMap={playerMap}
+              selectedSlot={selectedSlot}
+              onSelectSlot={(id) => setSelectedSlot(id as SlotId)}
+              onClearSlot={(id) => clearSlot(id as SlotId)}
+            />
+            <div className="mt-4">
+              <PositionGrid
+                positions={positions}
+                playerMap={playerMap}
+                selectedSlot={selectedSlot}
+                onSelectSlot={(id) => setSelectedSlot(id as SlotId)}
+                onClearSlot={(id) => clearSlot(id as SlotId)}
+              />
+            </div>
+          </section>
+
+          {lineupId && <SimulatePanel lineupId={lineupId} />}
+        </div>
+
+        <aside className="surface p-4 xl:sticky xl:top-20">
+          <h2 className="section-title">Roster</h2>
+          <div className="mt-4">
+            <RosterList
+              roster={effectiveRoster}
+              selectedSlot={selectedSlot}
+              slotLabel={selectedSlotLabel}
+              assignedIds={assignedIds}
+              onSelectPlayer={handleSelectPlayer}
+            />
+          </div>
+          <div className="mt-3 border-t border-ink-950/10 pt-3 dark:border-white/10">
             <button
               type="button"
-              onClick={fetchScore}
-              disabled={scoreLoading}
-              className="rounded border border-stone-300 px-3 py-2 text-sm font-medium transition hover:bg-stone-100 dark:border-stone-600 dark:hover:bg-stone-800"
+              onClick={() => setShowAddCustom((open) => !open)}
+              className="text-sm font-semibold text-grass-800 hover:underline dark:text-grass-400"
             >
-              Refresh score
+              {showAddCustom ? "Cancel" : "Add a custom player"}
             </button>
-          )}
-        </div>
+            {showAddCustom && (
+              <AddCustomPlayerForm
+                onAdd={(player) => {
+                  setCustomPlayers((prev) => [...prev, player]);
+                  setShowAddCustom(false);
+                }}
+              />
+            )}
+          </div>
+        </aside>
       </div>
-      <div>
-        <h2 className="mb-3 text-lg font-semibold text-stone-900 dark:text-stone-100">
-          Roster
-        </h2>
-        <RosterList
-          roster={effectiveRoster}
-          selectedSlot={selectedSlot}
-          onSelectPlayer={handleSelectPlayer}
-        />
-        <div className="mt-3">
-          <button
-            type="button"
-            onClick={() => setShowAddCustom(!showAddCustom)}
-            className="text-sm text-diamond-600 hover:underline dark:text-diamond-400"
-          >
-            {showAddCustom ? "Cancel" : "+ Add custom player"}
-          </button>
-          {showAddCustom && (
-            <AddCustomPlayerForm
-              onAdd={(p) => {
-                setCustomPlayers((prev) => [...prev, p]);
-                setShowAddCustom(false);
-              }}
-            />
-          )}
+
+      {selectedSlot && (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-ink-950/10 bg-chalk/95 p-3 shadow-card backdrop-blur xl:hidden dark:border-white/10 dark:bg-ink-950/95">
+          <PlayerPicker
+            roster={effectiveRoster}
+            label={`Assign ${selectedSlotLabel}`}
+            onSelect={handleSelectPlayer}
+            onCancel={() => setSelectedSlot(null)}
+          />
         </div>
-      </div>
+      )}
     </div>
   );
 }

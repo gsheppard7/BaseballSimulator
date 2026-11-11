@@ -1,6 +1,7 @@
 "use client";
 
 import type { PlayerItem } from "./LineupBuilder";
+import { lastName } from "./PlayerAvatar";
 import { POSITION_ORDER } from "@/lib/types";
 
 function PositionSlot({
@@ -24,34 +25,34 @@ function PositionSlot({
       role="button"
       tabIndex={0}
       onClick={onSelect}
-      onKeyDown={(e) => e.key === "Enter" && onSelect()}
-      className={`flex flex-col items-center justify-center rounded-lg border-2 p-2 transition ${
+      onKeyDown={(event) => {
+        if (event.target !== event.currentTarget) return;
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onSelect();
+        }
+      }}
+      aria-pressed={isSelected}
+      className={`cursor-pointer rounded-xl border px-2 py-2 text-left transition ${
         isSelected
-          ? "border-diamond-500 bg-diamond-50 dark:border-diamond-400 dark:bg-diamond-950/50"
-          : "border-stone-200 bg-white hover:border-stone-300 dark:border-stone-700 dark:bg-stone-900 dark:hover:border-stone-600"
-      } cursor-pointer`}
+          ? "border-stitch-500 bg-stitch-500/10"
+          : "border-ink-950/10 bg-white hover:border-ink-950/25 dark:border-white/10 dark:bg-ink-950/40 dark:hover:border-white/25"
+      }`}
     >
-      <span className="text-xs font-medium text-stone-500 dark:text-stone-400">
+      <span className="block text-[10px] font-bold uppercase tracking-[0.14em] text-ink-900/50 dark:text-chalk/50">
         {position}
       </span>
-      {player ? (
-        <>
-          <span className="mt-1 truncate text-center text-sm font-medium text-stone-900 dark:text-stone-100">
-            {player.name.split(" ").pop() ?? player.name}
-          </span>
-          <button
-            type="button"
-            onClick={onClear}
-            className="mt-0.5 text-xs text-stone-500 hover:underline dark:text-stone-400"
-            aria-label={`Clear ${position}`}
-          >
-            Clear
-          </button>
-        </>
-      ) : (
-        <span className="mt-1 text-xs text-stone-400 dark:text-stone-500">
-          Click to add
-        </span>
+      <span className="mt-0.5 block truncate text-sm font-semibold text-ink-950 dark:text-chalk">
+        {player ? lastName(player.name) : "Open"}
+      </span>
+      {player && (
+        <button
+          type="button"
+          onClick={onClear}
+          className="text-[11px] text-ink-900/50 hover:text-stitch-600 dark:text-chalk/50"
+        >
+          Clear
+        </button>
       )}
     </div>
   );
@@ -71,8 +72,8 @@ export function PositionGrid({
   onClearSlot: (slotId: string) => void;
 }) {
   return (
-    <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
-      {POSITION_ORDER.filter((p) => p !== "P").map((pos) => (
+    <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-9">
+      {POSITION_ORDER.map((pos) => (
         <PositionSlot
           key={pos}
           position={pos}
@@ -80,8 +81,8 @@ export function PositionGrid({
           playerMap={playerMap}
           isSelected={selectedSlot === `pos-${pos}`}
           onSelect={() => onSelectSlot(`pos-${pos}`)}
-          onClear={(e) => {
-            e.stopPropagation();
+          onClear={(event) => {
+            event.stopPropagation();
             onClearSlot(`pos-${pos}`);
           }}
         />

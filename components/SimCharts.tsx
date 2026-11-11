@@ -7,7 +7,6 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  Cell,
 } from "recharts";
 
 export interface ProjectedPlayerStatRow {
@@ -33,7 +32,7 @@ export interface StatLeaderRow {
   name?: string;
   position: string;
   value: number;
-  stat: string;
+  stat?: string;
 }
 
 interface SimChartsProps {
@@ -49,6 +48,39 @@ interface SimChartsProps {
   } | null;
 }
 
+function rate(value: number): string {
+  return value.toFixed(3).replace(/^0/, "");
+}
+
+function LeaderList({
+  title,
+  rows,
+  format,
+}: {
+  title: string;
+  rows: StatLeaderRow[];
+  format: (value: number) => string;
+}) {
+  return (
+    <div>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-900/50 dark:text-chalk/50">
+        {title}
+      </p>
+      <ol className="mt-2 space-y-1.5">
+        {rows.map((row, index) => (
+          <li key={`${row.player_id}-${index}`} className="flex items-baseline justify-between gap-3 text-sm">
+            <span className="truncate text-ink-950 dark:text-chalk">
+              <span className="mr-2 font-display text-grass-700 dark:text-grass-400">{index + 1}</span>
+              {row.name ?? row.player_id}
+            </span>
+            <span className="tabular-nums text-ink-900/60 dark:text-chalk/60">{format(row.value)}</span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
 export function SimCharts({
   runsPerGame,
   winsPer162,
@@ -59,121 +91,122 @@ export function SimCharts({
   const winMin = Math.max(0, Math.floor(winsPer162.mean - winsPer162.std * 3));
   const winMax = Math.min(162, Math.ceil(winsPer162.mean + winsPer162.std * 3));
   const binCount = winsPer162.histogram.length;
-  const binWidth =
-    binCount > 0 ? (winMax - winMin) / binCount || 1 : 1;
-  const histogramData = winsPer162.histogram.map((count, i) => ({
-    wins: Math.round(winMin + (i + 0.5) * binWidth),
+  const binWidth = binCount > 0 ? (winMax - winMin) / binCount || 1 : 1;
+  const histogramData = winsPer162.histogram.map((count, index) => ({
+    wins: Math.round(winMin + (index + 0.5) * binWidth),
     count,
   }));
+  const oddsPct = Math.max(0, Math.min(100, playoffOdds * 100));
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-lg border border-stone-200 bg-white p-4 dark:border-stone-700 dark:bg-stone-900">
-          <p className="text-sm text-stone-500 dark:text-stone-400">
-            Runs / game (mean)
+    <div className="space-y-5">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div className="rounded-2xl bg-ink-950 px-4 py-4 text-chalk">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/55">
+            Runs / game
           </p>
-          <p className="text-2xl font-bold text-stone-900 dark:text-stone-100">
+          <p className="mt-1 font-display text-4xl tabular-nums leading-none">
             {runsPerGame.mean.toFixed(2)}
           </p>
-          <p className="text-xs text-stone-500 dark:text-stone-400">
-            Median {runsPerGame.median.toFixed(2)} · 10th %ile {runsPerGame.p10.toFixed(2)} · 90th %ile {runsPerGame.p90.toFixed(2)}
+          <p className="mt-2 text-xs text-white/60">
+            Median {runsPerGame.median.toFixed(2)} · {runsPerGame.p10.toFixed(2)} to {runsPerGame.p90.toFixed(2)}
           </p>
         </div>
-        <div className="rounded-lg border border-stone-200 bg-white p-4 dark:border-stone-700 dark:bg-stone-900">
-          <p className="text-sm text-stone-500 dark:text-stone-400">
+        <div className="rounded-2xl bg-grass-700 px-4 py-4 text-white">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/70">
             Wins per 162
           </p>
-          <p className="text-2xl font-bold text-stone-900 dark:text-stone-100">
+          <p className="mt-1 font-display text-4xl tabular-nums leading-none">
             {winsPer162.mean.toFixed(1)}
           </p>
-          <p className="text-xs text-stone-500 dark:text-stone-400">
-            Std dev {winsPer162.std.toFixed(1)}
-          </p>
+          <p className="mt-2 text-xs text-white/75">Spread {winsPer162.std.toFixed(1)} wins</p>
         </div>
-        <div className="rounded-lg border border-stone-200 bg-white p-4 dark:border-stone-700 dark:bg-stone-900">
-          <p className="text-sm text-stone-500 dark:text-stone-400">
-            Playoff odds (90+ wins)
+        <div className="rounded-2xl border border-ink-950/10 bg-white px-4 py-4 dark:border-white/10 dark:bg-ink-950/40">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-900/50 dark:text-chalk/50">
+            Playoff odds
           </p>
-          <p className="text-2xl font-bold text-diamond-600 dark:text-diamond-400">
-            {(playoffOdds * 100).toFixed(1)}%
+          <p className="mt-1 font-display text-4xl tabular-nums leading-none text-ink-950 dark:text-chalk">
+            {oddsPct.toFixed(1)}%
           </p>
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-ink-950/10 dark:bg-white/10">
+            <div className="h-full rounded-full bg-stitch-500" style={{ width: `${oddsPct}%` }} />
+          </div>
+          <p className="mt-2 text-xs text-ink-900/50 dark:text-chalk/50">Share of seasons with 90+ wins</p>
         </div>
       </div>
-      <div className="rounded-lg border border-stone-200 bg-white p-4 dark:border-stone-700 dark:bg-stone-900">
-        <h3 className="text-sm font-medium text-stone-700 dark:text-stone-300">
-          Season wins distribution
+
+      <div className="rounded-2xl border border-ink-950/10 bg-white p-4 dark:border-white/10 dark:bg-ink-950/40">
+        <h3 className="font-display text-xl tracking-wide text-ink-950 dark:text-chalk">
+          Season wins
         </h3>
-        <div className="mt-2 h-64">
+        <div className="mt-3 h-64">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={histogramData} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
+            <BarChart data={histogramData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <XAxis
                 dataKey="wins"
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 12, fill: "currentColor" }}
                 stroke="currentColor"
-                className="text-stone-500"
+                className="text-ink-900/50"
               />
               <YAxis
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 12, fill: "currentColor" }}
                 stroke="currentColor"
-                className="text-stone-500"
+                className="text-ink-900/50"
+                width={32}
               />
               <Tooltip
+                cursor={{ fill: "rgba(20, 110, 54, 0.08)" }}
                 contentStyle={{
-                  backgroundColor: "var(--tw-bg-opacity, 1)",
-                  border: "1px solid #e5e7eb",
-                  borderRadius: "0.5rem",
+                  backgroundColor: "#121c33",
+                  border: "none",
+                  borderRadius: "0.75rem",
+                  color: "#f6f1e7",
                 }}
-                labelFormatter={(w) => `Wins: ${w}`}
+                labelFormatter={(wins) => `${wins} wins`}
               />
-              <Bar dataKey="count" fill="#16a34a" radius={[2, 2, 0, 0]}>
-                {histogramData.map((_, i) => (
-                  <Cell key={i} fill="#16a34a" />
-                ))}
-              </Bar>
+              <Bar dataKey="count" fill="#146e36" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
 
       {projectedStats && projectedStats.length > 0 && (
-        <div className="rounded-lg border border-stone-200 bg-white p-4 dark:border-stone-700 dark:bg-stone-900">
-          <h3 className="mb-3 text-sm font-medium text-stone-700 dark:text-stone-300">
-            Projected stats (one simulated season)
-          </h3>
+        <div className="overflow-hidden rounded-2xl border border-ink-950/10 dark:border-white/10">
+          <div className="border-b border-ink-950/10 px-4 py-3 dark:border-white/10">
+            <h3 className="font-display text-xl tracking-wide text-ink-950 dark:text-chalk">
+              Projected season
+            </h3>
+          </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-stone-200 dark:border-stone-600">
-                  <th className="pb-2 pr-2 font-medium text-stone-700 dark:text-stone-300">Player</th>
-                  <th className="pb-2 pr-2 font-medium text-stone-700 dark:text-stone-300">Pos</th>
-                  <th className="pb-2 pr-2 font-medium text-stone-700 dark:text-stone-300">PA</th>
-                  <th className="pb-2 pr-2 font-medium text-stone-700 dark:text-stone-300">AB</th>
-                  <th className="pb-2 pr-2 font-medium text-stone-700 dark:text-stone-300">H</th>
-                  <th className="pb-2 pr-2 font-medium text-stone-700 dark:text-stone-300">HR</th>
-                  <th className="pb-2 pr-2 font-medium text-stone-700 dark:text-stone-300">BB</th>
-                  <th className="pb-2 pr-2 font-medium text-stone-700 dark:text-stone-300">K</th>
-                  <th className="pb-2 pr-2 font-medium text-stone-700 dark:text-stone-300">AVG</th>
-                  <th className="pb-2 pr-2 font-medium text-stone-700 dark:text-stone-300">OBP</th>
-                  <th className="pb-2 pr-2 font-medium text-stone-700 dark:text-stone-300">SLG</th>
+            <table className="w-full text-left text-sm tabular-nums">
+              <thead className="bg-ink-950/[0.03] text-[11px] uppercase tracking-[0.14em] text-ink-900/50 dark:bg-white/[0.04] dark:text-chalk/50">
+                <tr>
+                  {["Player", "Pos", "PA", "AB", "H", "HR", "BB", "K", "AVG", "OBP", "SLG"].map((heading) => (
+                    <th key={heading} className="px-3 py-2 font-semibold">
+                      {heading}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {projectedStats.map((p, i) => (
-                  <tr key={p.player_id || i} className="border-b border-stone-100 dark:border-stone-800">
-                    <td className="py-1.5 pr-2 font-medium text-stone-900 dark:text-stone-100">
-                      {p.name ?? p.player_id}
+                {projectedStats.map((player, index) => (
+                  <tr
+                    key={player.player_id || index}
+                    className="border-t border-ink-950/5 odd:bg-white even:bg-ink-950/[0.02] dark:border-white/5 dark:odd:bg-transparent dark:even:bg-white/[0.03]"
+                  >
+                    <td className="whitespace-nowrap px-3 py-2 font-semibold text-ink-950 dark:text-chalk">
+                      {player.name ?? player.player_id}
                     </td>
-                    <td className="py-1.5 pr-2 text-stone-600 dark:text-stone-400">{p.position}</td>
-                    <td className="py-1.5 pr-2 text-stone-600 dark:text-stone-400">{p.pa}</td>
-                    <td className="py-1.5 pr-2 text-stone-600 dark:text-stone-400">{p.ab}</td>
-                    <td className="py-1.5 pr-2 text-stone-600 dark:text-stone-400">{p.h}</td>
-                    <td className="py-1.5 pr-2 text-stone-600 dark:text-stone-400">{p.hr}</td>
-                    <td className="py-1.5 pr-2 text-stone-600 dark:text-stone-400">{p.bb}</td>
-                    <td className="py-1.5 pr-2 text-stone-600 dark:text-stone-400">{p.k}</td>
-                    <td className="py-1.5 pr-2 text-stone-600 dark:text-stone-400">{p.avg.toFixed(3)}</td>
-                    <td className="py-1.5 pr-2 text-stone-600 dark:text-stone-400">{p.obp.toFixed(3)}</td>
-                    <td className="py-1.5 pr-2 text-stone-600 dark:text-stone-400">{p.slg.toFixed(3)}</td>
+                    <td className="px-3 py-2 text-ink-900/70 dark:text-chalk/70">{player.position}</td>
+                    <td className="px-3 py-2">{player.pa}</td>
+                    <td className="px-3 py-2">{player.ab}</td>
+                    <td className="px-3 py-2">{player.h}</td>
+                    <td className="px-3 py-2">{player.hr}</td>
+                    <td className="px-3 py-2">{player.bb}</td>
+                    <td className="px-3 py-2">{player.k}</td>
+                    <td className="px-3 py-2">{rate(player.avg)}</td>
+                    <td className="px-3 py-2">{rate(player.obp)}</td>
+                    <td className="px-3 py-2">{rate(player.slg)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -183,51 +216,15 @@ export function SimCharts({
       )}
 
       {leaders && (
-        <div className="rounded-lg border border-stone-200 bg-white p-4 dark:border-stone-700 dark:bg-stone-900">
-          <h3 className="mb-3 text-sm font-medium text-stone-700 dark:text-stone-300">
-            Team leaders (projected)
+        <div className="rounded-2xl border border-ink-950/10 p-4 dark:border-white/10">
+          <h3 className="font-display text-xl tracking-wide text-ink-950 dark:text-chalk">
+            Team leaders
           </h3>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div>
-              <p className="text-xs font-medium uppercase text-stone-500 dark:text-stone-400">AVG</p>
-              <ul className="mt-1 space-y-0.5 text-sm">
-                {leaders.avg.map((l, i) => (
-                  <li key={l.player_id + l.stat}>
-                    {i + 1}. {l.name ?? l.player_id} <span className="text-stone-500">({l.value.toFixed(3)})</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <p className="text-xs font-medium uppercase text-stone-500 dark:text-stone-400">OBP</p>
-              <ul className="mt-1 space-y-0.5 text-sm">
-                {leaders.obp.map((l, i) => (
-                  <li key={l.player_id + l.stat}>
-                    {i + 1}. {l.name ?? l.player_id} <span className="text-stone-500">({l.value.toFixed(3)})</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <p className="text-xs font-medium uppercase text-stone-500 dark:text-stone-400">SLG</p>
-              <ul className="mt-1 space-y-0.5 text-sm">
-                {leaders.slg.map((l, i) => (
-                  <li key={l.player_id + l.stat}>
-                    {i + 1}. {l.name ?? l.player_id} <span className="text-stone-500">({l.value.toFixed(3)})</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <p className="text-xs font-medium uppercase text-stone-500 dark:text-stone-400">HR</p>
-              <ul className="mt-1 space-y-0.5 text-sm">
-                {leaders.hr.map((l, i) => (
-                  <li key={l.player_id + l.stat}>
-                    {i + 1}. {l.name ?? l.player_id} <span className="text-stone-500">({l.value})</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            <LeaderList title="AVG" rows={leaders.avg} format={rate} />
+            <LeaderList title="OBP" rows={leaders.obp} format={rate} />
+            <LeaderList title="SLG" rows={leaders.slg} format={rate} />
+            <LeaderList title="HR" rows={leaders.hr} format={(value) => String(value)} />
           </div>
         </div>
       )}

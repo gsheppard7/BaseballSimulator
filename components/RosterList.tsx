@@ -1,44 +1,51 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { PlayerItem } from "./LineupBuilder";
-
+import { BatBadge, PlayerAvatar } from "./PlayerAvatar";
 
 function RosterItem({
   player,
   isAssignMode,
+  inLineup,
   onSelect,
 }: {
   player: PlayerItem;
   isAssignMode: boolean;
+  inLineup: boolean;
   onSelect: () => void;
 }) {
   return (
     <button
       type="button"
       onClick={isAssignMode ? onSelect : undefined}
-      className={`flex w-full items-center gap-2 rounded-lg border bg-white p-2 text-left transition dark:bg-stone-900 ${
+      className={`flex w-full items-center gap-2.5 rounded-xl border px-2.5 py-2 text-left transition ${
         isAssignMode
-          ? "cursor-pointer border-diamond-300 hover:border-diamond-500 hover:bg-diamond-50 dark:border-diamond-700 dark:hover:border-diamond-600 dark:hover:bg-diamond-950/40"
-          : "border-stone-200 dark:border-stone-700"
+          ? "border-grass-700/30 bg-white hover:border-grass-700 hover:bg-grass-50 dark:border-grass-400/30 dark:bg-ink-950/40 dark:hover:bg-grass-900/30"
+          : "cursor-default border-transparent bg-ink-950/[0.03] dark:bg-white/[0.04]"
       }`}
     >
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-stone-200 text-xs font-medium text-stone-700 dark:bg-stone-600 dark:text-stone-200">
-        {player.name
-          .split(" ")
-          .map((n) => n[0])
-          .join("")
-          .slice(0, 2)}
-      </div>
-      <div className="min-w-0">
-        <p className="truncate text-sm font-medium text-stone-900 dark:text-stone-100">
-          {player.name}
-        </p>
-        <p className="text-xs text-stone-500 dark:text-stone-400">
+      <PlayerAvatar name={player.name} url={player.headshotUrl} size="sm" />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1.5">
+          <p className="truncate text-sm font-semibold text-ink-950 dark:text-chalk">{player.name}</p>
+          <BatBadge side={player.batSide} />
+        </div>
+        <p className="truncate text-xs text-ink-900/55 dark:text-chalk/55">
           {player.positions}
-          {player.batSide ? ` · ${player.batSide}` : ""}
+          {(player.obp || player.slg) && (
+            <span className="tabular-nums">
+              {" "}
+              · {player.obp ?? "—"} / {player.slg ?? "—"}
+            </span>
+          )}
         </p>
       </div>
+      {inLineup && (
+        <span className="shrink-0 rounded-full bg-grass-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-grass-800 dark:bg-grass-900 dark:text-grass-300">
+          In
+        </span>
+      )}
     </button>
   );
 }
@@ -46,49 +53,67 @@ function RosterItem({
 export function RosterList({
   roster,
   selectedSlot,
+  slotLabel,
+  assignedIds,
   onSelectPlayer,
 }: {
   roster: PlayerItem[];
   selectedSlot: string | null;
+  slotLabel?: string;
+  assignedIds: string[];
   onSelectPlayer: (player: PlayerItem) => void;
 }) {
   const [search, setSearch] = useState("");
+  const assigned = useMemo(() => new Set(assignedIds), [assignedIds]);
   const filtered = useMemo(() => {
     if (!search.trim()) return roster;
-    const q = search.trim().toLowerCase();
+    const query = search.trim().toLowerCase();
     return roster.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        (p.positions || "").toLowerCase().includes(q)
+      (player) =>
+        player.name.toLowerCase().includes(query) ||
+        (player.positions || "").toLowerCase().includes(query)
     );
   }, [roster, search]);
 
   const isAssignMode = !!selectedSlot;
 
   return (
-    <div className="space-y-2">
-      {isAssignMode && (
-        <p className="text-xs text-diamond-600 dark:text-diamond-400">
-          Click a player to assign to the selected slot
-        </p>
-      )}
+    <div className="space-y-3">
+      <div
+        className={`rounded-xl px-3 py-2 text-sm ${
+          isAssignMode
+            ? "bg-grass-700 text-white"
+            : "bg-ink-950/5 text-ink-900/70 dark:bg-white/5 dark:text-chalk/70"
+        }`}
+      >
+        {isAssignMode
+          ? `Choose a player for ${slotLabel || "the selected spot"}.`
+          : "Select a batting or field spot first."}
+      </div>
       <input
         type="text"
-        placeholder="Search by name or position…"
+        placeholder="Search name or position"
         value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="w-full rounded border border-stone-300 px-2 py-1.5 text-sm dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
+        onChange={(event) => setSearch(event.target.value)}
+        className="field"
         aria-label="Search roster"
       />
-      <div className="flex max-h-[60vh] flex-col gap-1 overflow-y-auto rounded-lg border border-stone-200 bg-stone-50/50 p-2 dark:border-stone-700 dark:bg-stone-900/50">
-        {filtered.map((player) => (
-          <RosterItem
-            key={player.id}
-            player={player}
-            isAssignMode={isAssignMode}
-            onSelect={() => onSelectPlayer(player)}
-          />
-        ))}
+      <div className="flex max-h-[60vh] flex-col gap-1.5 overflow-y-auto pr-1">
+        {filtered.length === 0 ? (
+          <p className="px-1 py-6 text-center text-sm text-ink-900/50 dark:text-chalk/50">
+            No players match that search.
+          </p>
+        ) : (
+          filtered.map((player) => (
+            <RosterItem
+              key={player.id}
+              player={player}
+              isAssignMode={isAssignMode}
+              inLineup={assigned.has(player.id)}
+              onSelect={() => onSelectPlayer(player)}
+            />
+          ))
+        )}
       </div>
     </div>
   );

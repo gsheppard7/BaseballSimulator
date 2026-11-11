@@ -1,42 +1,57 @@
 import Link from "next/link";
+import { fetchTeamList } from "@/lib/fetch-teams";
+import { groupTeams, onColor, shortDivision, teamColor } from "@/lib/team-colors";
 
 export const dynamic = "force-dynamic";
 
-async function getTeams() {
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-  const res = await fetch(`${base}/api/teams`, { cache: "no-store" });
-  if (!res.ok) throw new Error("Failed to fetch teams");
-  return res.json();
-}
-
 export default async function TeamSelectPage() {
-  const teams = await getTeams();
+  const teams = await fetchTeamList();
+  const groups = groupTeams(teams);
+
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-stone-900 dark:text-stone-100">
-        Pick a team
-      </h1>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-        {teams.map((t: { id: string; name: string; abbrev: string; division?: string }) => (
-          <Link
-            key={t.id}
-            href={`/team/${t.id}`}
-            className="rounded-lg border border-stone-200 bg-white p-4 text-center shadow-sm transition hover:border-diamond-400 hover:shadow dark:border-stone-700 dark:bg-stone-900 dark:hover:border-diamond-600"
-          >
-            <span className="font-semibold text-stone-900 dark:text-stone-100">
-              {t.name}
-            </span>
-            <span className="ml-1 text-stone-500 dark:text-stone-400">
-              ({t.abbrev})
-            </span>
-            {t.division && (
-              <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
-                {t.division}
-              </p>
-            )}
-          </Link>
-        ))}
-      </div>
+    <div className="space-y-10">
+      <header>
+        <p className="page-kicker">30 clubs</p>
+        <h1 className="page-title mt-2">Pick a team</h1>
+        <p className="lede mt-3">
+          Open a roster, then build the batting order and the defense.
+        </p>
+      </header>
+      {groups.map((group) => (
+        <section key={group.name}>
+          <h2 className="section-title">{shortDivision(group.name) || group.name}</h2>
+          <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
+            {group.teams.map((team) => {
+              const color = teamColor(team.abbrev);
+              const fg = onColor(color);
+              return (
+                <Link
+                  key={team.id}
+                  href={`/team/${team.id}`}
+                  className="group overflow-hidden rounded-2xl border border-ink-950/10 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-card dark:border-white/10 dark:bg-ink-900"
+                >
+                  <div
+                    className="flex items-center justify-between px-4 py-3"
+                    style={{ backgroundColor: color, color: fg }}
+                  >
+                    <span className="font-display text-3xl leading-none tracking-wide">
+                      {team.abbrev}
+                    </span>
+                    <span className="text-xs font-semibold uppercase tracking-wider opacity-80 transition group-hover:opacity-100">
+                      Roster
+                    </span>
+                  </div>
+                  <div className="px-4 py-3">
+                    <p className="font-semibold leading-snug text-ink-950 dark:text-chalk">
+                      {team.name}
+                    </p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      ))}
     </div>
   );
 }

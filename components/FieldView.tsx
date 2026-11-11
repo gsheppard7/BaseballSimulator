@@ -1,71 +1,102 @@
 "use client";
 
+import { DiamondSvg } from "./DiamondSvg";
+import { lastName, PlayerAvatar } from "./PlayerAvatar";
 import type { PlayerItem } from "./LineupBuilder";
+import { POSITION_ORDER } from "@/lib/types";
 
-/**
- * 2D diamond-style field with position slots and player initials/headshots.
- */
+const SPOTS: Record<string, { x: number; y: number }> = {
+  CF: { x: 50, y: 16 },
+  LF: { x: 18, y: 30 },
+  RF: { x: 82, y: 30 },
+  SS: { x: 34, y: 44 },
+  "2B": { x: 66, y: 44 },
+  P: { x: 50, y: 58 },
+  "3B": { x: 18, y: 64 },
+  "1B": { x: 82, y: 64 },
+  C: { x: 50, y: 82 },
+};
+
 export function FieldView({
   positions,
   playerMap,
+  selectedSlot,
+  onSelectSlot,
+  onClearSlot,
 }: {
   positions: Record<string, string>;
   playerMap: Map<string, PlayerItem>;
+  selectedSlot?: string | null;
+  onSelectSlot?: (slotId: string) => void;
+  onClearSlot?: (slotId: string) => void;
 }) {
-  const order = ["P", "C", "1B", "2B", "3B", "SS", "LF", "CF", "RF"];
   return (
-    <div className="relative aspect-[2/1] max-w-lg rounded-lg border border-stone-200 bg-diamond-50/30 dark:border-stone-700 dark:bg-diamond-950/20">
-      {/* Simplified diamond: infield arc + outfield */}
-      <div className="absolute inset-0 flex flex-wrap items-center justify-center gap-2 p-4">
-        {order.map((pos) => {
-          const playerId = positions[pos] ?? "";
-          const player = playerId ? playerMap.get(playerId) : null;
-          const label = player
-            ? player.name
-                .split(" ")
-                .map((n) => n[0])
-                .join("")
-                .slice(0, 2)
-            : pos;
-          return (
-            <div
-              key={pos}
-              className="flex flex-col items-center rounded-lg border border-stone-200 bg-white/90 px-2 py-1.5 shadow-sm dark:border-stone-600 dark:bg-stone-800/90"
-              style={{
-                position: "absolute",
-                ...positionStyle(pos),
-              }}
+    <div className="relative mx-auto aspect-[10/13] w-full min-w-0 max-w-lg">
+      <DiamondSvg className="absolute inset-0 h-full w-full" />
+      {POSITION_ORDER.map((pos) => {
+        const spot = SPOTS[pos] ?? { x: 50, y: 50 };
+        const slotId = `pos-${pos}`;
+        const playerId = positions[pos] ?? "";
+        const player = playerId ? playerMap.get(playerId) : null;
+        const selected = selectedSlot === slotId;
+        return (
+          <div
+            key={pos}
+            role="button"
+            tabIndex={0}
+            onClick={() => onSelectSlot?.(slotId)}
+            onKeyDown={(event) => {
+              if (event.target !== event.currentTarget) return;
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onSelectSlot?.(slotId);
+              }
+            }}
+            aria-pressed={selected}
+            aria-label={player ? `${pos}, ${player.name}` : `${pos}, empty`}
+            className={`absolute z-10 flex w-[22%] min-w-[3.4rem] -translate-x-1/2 -translate-y-1/2 cursor-pointer flex-col items-center rounded-xl border px-1 py-1 text-center shadow-md transition ${
+              selected
+                ? "z-20 border-stitch-500 bg-white ring-2 ring-stitch-500/50"
+                : player
+                  ? "border-white/80 bg-white/95 hover:border-chalk"
+                  : "border-dashed border-white/70 bg-ink-950/35 text-white hover:bg-ink-950/55"
+            }`}
+            style={{ left: `${spot.x}%`, top: `${spot.y}%` }}
+          >
+            <span
+              className={`text-[9px] font-bold uppercase tracking-[0.14em] ${
+                player || selected ? "text-grass-800" : "text-white/80"
+              }`}
             >
-              <span className="text-[10px] font-medium text-stone-500 dark:text-stone-400">
-                {pos}
+              {pos}
+            </span>
+            {player ? (
+              <>
+                <PlayerAvatar name={player.name} url={player.headshotUrl} size="xs" />
+                <span className="mt-0.5 w-full truncate text-[11px] font-semibold leading-tight text-ink-950">
+                  {lastName(player.name)}
+                </span>
+                {onClearSlot && (
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onClearSlot(slotId);
+                    }}
+                    className="text-[10px] font-medium text-ink-900/50 hover:text-stitch-600"
+                  >
+                    Clear
+                  </button>
+                )}
+              </>
+            ) : (
+              <span className={`py-1 text-[11px] font-semibold ${selected ? "text-ink-950" : "text-white"}`}>
+                Open
               </span>
-              <span className="text-xs font-semibold text-stone-900 dark:text-stone-100">
-                {label}
-              </span>
-            </div>
-          );
-        })}
-      </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
-}
-
-function positionStyle(pos: string): React.CSSProperties {
-  const percent = (x: number, y: number) => ({
-    left: `${x}%`,
-    top: `${y}%`,
-    transform: "translate(-50%, -50%)",
-  });
-  const map: Record<string, React.CSSProperties> = {
-    P: percent(50, 35),
-    C: percent(50, 42),
-    "1B": percent(72, 28),
-    "2B": percent(58, 38),
-    "3B": percent(28, 28),
-    SS: percent(42, 38),
-    LF: percent(18, 55),
-    CF: percent(50, 12),
-    RF: percent(82, 55),
-  };
-  return map[pos] ?? percent(50, 50);
 }

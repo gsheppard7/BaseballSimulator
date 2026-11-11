@@ -56,38 +56,42 @@ export function SimulatePanel({ lineupId }: { lineupId: string }) {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={runSim}
-          disabled={loading}
-          className="rounded-lg bg-diamond-600 px-4 py-2 font-medium text-white transition hover:bg-diamond-700 disabled:opacity-50 dark:bg-diamond-500 dark:hover:bg-diamond-600"
-        >
-          {loading ? "Simulating…" : "Simulate season (1,000 runs)"}
+    <section className="surface p-4 sm:p-5">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h2 className="section-title">Season simulation</h2>
+          <p className="mt-1 max-w-xl text-sm text-ink-900/60 dark:text-chalk/60">
+            One thousand simulated 162-game seasons. Wins, playoff odds, and a projected stat line.
+          </p>
+        </div>
+        <button type="button" onClick={runSim} disabled={loading} className="btn-primary">
+          {loading ? "Simulating…" : "Run 1,000 seasons"}
         </button>
-        <p className="text-sm text-stone-500 dark:text-stone-400">
-          Runs 1,000 simulated 162-game seasons and shows wins distribution and
-          playoff odds.
-        </p>
       </div>
+      {loading && (
+        <p className="mt-4 text-sm text-ink-900/60 dark:text-chalk/60">
+          Playing out the schedule. This can take a moment.
+        </p>
+      )}
       {error && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30">
-          <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+        <div className="mt-4 rounded-2xl border border-amber-300/80 bg-amber-50 p-4 dark:border-amber-700/60 dark:bg-amber-950/40">
+          <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">
             Simulation unavailable
           </p>
-          <p className="mt-1 text-sm text-amber-700 dark:text-amber-300">{error}</p>
+          <p className="mt-1 text-sm text-amber-800 dark:text-amber-200">{error}</p>
         </div>
       )}
       {result && (
-        <SimCharts
-          runsPerGame={result.runs_per_game}
-          winsPer162={result.wins_per_162}
-          playoffOdds={result.playoff_odds}
-          projectedStats={result.projected_stats ?? null}
-          leaders={result.leaders ?? null}
-        />
+        <div className="mt-5">
+          <SimCharts
+            runsPerGame={result.runs_per_game}
+            winsPer162={result.wins_per_162}
+            playoffOdds={result.playoff_odds}
+            projectedStats={result.projected_stats ?? null}
+            leaders={result.leaders ?? null}
+          />
+        </div>
       )}
-    </div>
+    </section>
   );
 }

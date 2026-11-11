@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { PlayerItem } from "./LineupBuilder";
+import { BatBadge, PlayerAvatar } from "./PlayerAvatar";
 
 export function PlayerPicker({
   roster,
@@ -18,32 +19,37 @@ export function PlayerPicker({
 
   const filtered = useMemo(() => {
     if (!search.trim()) return roster;
-    const q = search.trim().toLowerCase();
+    const query = search.trim().toLowerCase();
     return roster.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        (p.positions || "").toLowerCase().includes(q)
+      (player) =>
+        player.name.toLowerCase().includes(query) ||
+        (player.positions || "").toLowerCase().includes(query)
     );
   }, [roster, search]);
 
   return (
-    <div className="rounded-lg border border-diamond-200 bg-white p-3 shadow-lg dark:border-diamond-700 dark:bg-stone-900">
-      <p className="mb-2 text-sm font-medium text-stone-700 dark:text-stone-300">
-        {label}
-      </p>
+    <div className="surface p-3 shadow-card">
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <p className="text-sm font-semibold text-ink-950 dark:text-chalk">{label}</p>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="text-sm font-medium text-ink-900/60 hover:text-ink-950 dark:text-chalk/60 dark:hover:text-chalk"
+        >
+          Cancel
+        </button>
+      </div>
       <input
         type="text"
-        placeholder="Type to search by name or position…"
+        placeholder="Search name or position"
         value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="mb-2 w-full rounded border border-stone-300 px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
+        onChange={(event) => setSearch(event.target.value)}
+        className="field mb-2"
         autoFocus
       />
-      <div className="max-h-48 overflow-y-auto">
+      <div className="max-h-52 overflow-y-auto">
         {filtered.length === 0 ? (
-          <p className="py-2 text-sm text-stone-500 dark:text-stone-400">
-            No players match.
-          </p>
+          <p className="py-3 text-sm text-ink-900/55 dark:text-chalk/55">No players match.</p>
         ) : (
           <ul className="space-y-1">
             {filtered.map((player) => (
@@ -51,14 +57,19 @@ export function PlayerPicker({
                 <button
                   type="button"
                   onClick={() => onSelect(player)}
-                  className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm transition hover:bg-diamond-100 dark:hover:bg-diamond-900/40"
+                  className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left transition hover:bg-grass-50 dark:hover:bg-white/5"
                 >
-                  <span className="font-medium text-stone-900 dark:text-stone-100">
-                    {player.name}
-                  </span>
-                  <span className="text-stone-500 dark:text-stone-400">
-                    {player.positions}
-                    {player.batSide ? ` · ${player.batSide}` : ""}
+                  <PlayerAvatar name={player.name} url={player.headshotUrl} size="sm" />
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-1.5">
+                      <span className="truncate text-sm font-semibold text-ink-950 dark:text-chalk">
+                        {player.name}
+                      </span>
+                      <BatBadge side={player.batSide} />
+                    </span>
+                    <span className="block truncate text-xs text-ink-900/55 dark:text-chalk/55">
+                      {player.positions}
+                    </span>
                   </span>
                 </button>
               </li>
@@ -66,13 +77,6 @@ export function PlayerPicker({
           </ul>
         )}
       </div>
-      <button
-        type="button"
-        onClick={onCancel}
-        className="mt-2 text-sm text-stone-500 hover:underline dark:text-stone-400"
-      >
-        Cancel
-      </button>
     </div>
   );
 }

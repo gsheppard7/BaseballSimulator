@@ -2,19 +2,72 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground: #0a0a0a;
-  --background: #fafafa;
+html {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.app-bg {
+  color: #121c33;
+  background-color: #f3efe4;
+  background-image:
+    radial-gradient(ellipse 90% 42% at 50% -12%, rgba(20, 110, 54, 0.18), transparent 58%),
+    radial-gradient(circle at 1px 1px, rgba(18, 28, 51, 0.045) 1px, transparent 0);
+  background-size: auto, 22px 22px;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --foreground: #fafafa;
-    --background: #0a0a0a;
+  .app-bg {
+    color: #f6f1e7;
+    background-color: #0b1220;
+    background-image:
+      radial-gradient(ellipse 90% 42% at 50% -12%, rgba(31, 157, 78, 0.2), transparent 58%),
+      radial-gradient(circle at 1px 1px, rgba(246, 241, 231, 0.05) 1px, transparent 0);
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
+@layer components {
+  .surface {
+    @apply rounded-2xl border border-ink-950/10 bg-white/90 shadow-card backdrop-blur-sm dark:border-white/10 dark:bg-ink-900/80;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-grass-600 focus-visible:ring-offset-2 focus-visible:ring-offset-chalk disabled:cursor-not-allowed disabled:opacity-50 dark:focus-visible:ring-offset-ink-950;
+  }
+
+  .btn-primary {
+    @apply btn bg-grass-700 text-white hover:bg-grass-800 dark:bg-grass-500 dark:text-ink-950 dark:hover:bg-grass-400;
+  }
+
+  .btn-secondary {
+    @apply btn border border-ink-950/15 bg-white text-ink-950 hover:bg-ink-50 dark:border-white/15 dark:bg-white/5 dark:text-chalk dark:hover:bg-white/10;
+  }
+
+  .btn-chalk {
+    @apply btn bg-chalk text-ink-950 hover:bg-white;
+  }
+
+  .btn-ghost-light {
+    @apply btn border border-white/25 bg-white/10 text-white hover:bg-white/20;
+  }
+
+  .field {
+    @apply w-full rounded-xl border border-ink-950/15 bg-white px-3 py-2 text-sm text-ink-950 shadow-sm outline-none transition placeholder:text-ink-900/40 focus:border-grass-600 focus:ring-2 focus:ring-grass-600/25 dark:border-white/15 dark:bg-ink-950 dark:text-chalk dark:placeholder:text-white/35;
+  }
+
+  .page-kicker {
+    @apply text-[11px] font-semibold uppercase tracking-[0.22em] text-grass-800 dark:text-grass-400;
+  }
+
+  .page-title {
+    @apply font-display text-4xl font-semibold tracking-wide text-ink-950 dark:text-chalk sm:text-5xl;
+  }
+
+  .lede {
+    @apply max-w-2xl text-base leading-relaxed text-ink-900/70 dark:text-chalk/70;
+  }
+
+  .section-title {
+    @apply font-display text-2xl tracking-wide text-ink-950 dark:text-chalk;
+  }
 }

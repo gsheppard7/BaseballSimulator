@@ -1,12 +1,13 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { LineupBuilder } from "@/components/LineupBuilder";
+import { appBase, fetchTeamMeta } from "@/lib/fetch-teams";
+import { onColor, teamColor } from "@/lib/team-colors";
 
 export const dynamic = "force-dynamic";
 
 async function getLineupBySlug(slug: string) {
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-  const res = await fetch(`${base}/api/lineups?slug=${slug}`, {
+  const res = await fetch(`${appBase()}/api/lineups?slug=${slug}`, {
     cache: "no-store",
   });
   if (!res.ok) return null;
@@ -14,8 +15,7 @@ async function getLineupBySlug(slug: string) {
 }
 
 async function getRoster(teamId: string) {
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-  const res = await fetch(`${base}/api/teams/${teamId}/roster`, {
+  const res = await fetch(`${appBase()}/api/teams/${teamId}/roster`, {
     cache: "no-store",
   });
   if (!res.ok) return null;
@@ -30,8 +30,13 @@ export default async function SharedLineupPage({
   const { shareSlug } = await params;
   const lineup = await getLineupBySlug(shareSlug);
   if (!lineup) notFound();
-  const roster = await getRoster(lineup.teamId);
+  const [roster, team] = await Promise.all([
+    getRoster(lineup.teamId),
+    fetchTeamMeta(lineup.teamId),
+  ]);
   if (!roster) notFound();
+  const color = teamColor(team?.abbrev);
+  const fg = onColor(color);
 
   const playerItems = roster.map(
     (p: {
@@ -63,17 +68,26 @@ export default async function SharedLineupPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-stone-900 dark:text-stone-100">
-          {lineup.name ?? "Shared lineup"}
-        </h1>
+      <header
+        className="flex flex-wrap items-end justify-between gap-4 overflow-hidden rounded-3xl px-6 py-6 shadow-card sm:px-8"
+        style={{ backgroundColor: color, color: fg }}
+      >
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] opacity-75">
+            {team?.name ?? "Shared card"}
+          </p>
+          <h1 className="mt-1 font-display text-4xl tracking-wide sm:text-5xl">
+            {lineup.name ?? "Shared lineup"}
+          </h1>
+        </div>
         <Link
           href={`/lineup/new?team=${lineup.teamId}`}
-          className="rounded-lg border border-stone-300 px-3 py-2 text-sm font-medium transition hover:bg-stone-100 dark:border-stone-600 dark:hover:bg-stone-800"
+          className="btn border border-current/30 bg-white/15 hover:bg-white/25"
+          style={{ color: fg }}
         >
           Clone to edit
         </Link>
-      </div>
+      </header>
       <LineupBuilder
         roster={playerItems}
         teamId={lineup.teamId}

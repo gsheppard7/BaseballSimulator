@@ -20,62 +20,75 @@ export function DeltaPanel({
     beforeRunsPerGame != null && afterRunsPerGame != null
       ? afterRunsPerGame - beforeRunsPerGame
       : null;
+  const ahead = scoreDelta != null && scoreDelta > 0;
+  const behind = scoreDelta != null && scoreDelta < 0;
 
   return (
-    <div className="rounded-lg border border-stone-200 bg-stone-50 p-4 dark:border-stone-700 dark:bg-stone-900/50">
-      <h3 className="text-sm font-medium text-stone-700 dark:text-stone-300">
-        {label}
-      </h3>
-      <div className="mt-2 grid grid-cols-2 gap-4 text-sm">
+    <div className="surface p-5">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <span className="text-stone-500 dark:text-stone-400">Before</span>
-          <p className="font-medium text-stone-900 dark:text-stone-100">
-            Score {beforeScore ?? "—"}
-            {beforeRunsPerGame != null && (
-              <span className="ml-1 text-stone-500 dark:text-stone-400">
-                ({beforeRunsPerGame.toFixed(2)} R/G)
-              </span>
-            )}
+          <h3 className="section-title">{label}</h3>
+          <p className="mt-1 text-sm text-ink-900/60 dark:text-chalk/60">
+            {scoreDelta == null
+              ? "One score is still missing."
+              : ahead
+                ? "The after score is higher."
+                : behind
+                  ? "The before score is higher."
+                  : "The scores match."}
           </p>
         </div>
-        <div>
-          <span className="text-stone-500 dark:text-stone-400">After</span>
-          <p className="font-medium text-stone-900 dark:text-stone-100">
-            Score {afterScore ?? "—"}
-            {afterRunsPerGame != null && (
-              <span className="ml-1 text-stone-500 dark:text-stone-400">
-                ({afterRunsPerGame.toFixed(2)} R/G)
-              </span>
-            )}
+        {scoreDelta != null && (
+          <p
+            className={`font-display text-5xl tabular-nums leading-none ${
+              ahead
+                ? "text-grass-700 dark:text-grass-400"
+                : behind
+                  ? "text-stitch-600"
+                  : "text-ink-950 dark:text-chalk"
+            }`}
+          >
+            {scoreDelta > 0 ? "+" : ""}
+            {scoreDelta.toFixed(1)}
           </p>
+        )}
+      </div>
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-2xl bg-ink-950/[0.04] p-4 dark:bg-white/[0.04]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-900/50 dark:text-chalk/50">
+            First
+          </p>
+          <p className="mt-1 font-display text-3xl tabular-nums text-ink-950 dark:text-chalk">
+            {beforeScore?.toFixed(1) ?? "—"}
+          </p>
+          {beforeRunsPerGame != null && (
+            <p className="text-sm text-ink-900/60 dark:text-chalk/60">
+              {beforeRunsPerGame.toFixed(2)} runs / game
+            </p>
+          )}
+        </div>
+        <div className="rounded-2xl bg-ink-950/[0.04] p-4 dark:bg-white/[0.04]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-900/50 dark:text-chalk/50">
+            Second
+          </p>
+          <p className="mt-1 font-display text-3xl tabular-nums text-ink-950 dark:text-chalk">
+            {afterScore?.toFixed(1) ?? "—"}
+          </p>
+          {afterRunsPerGame != null && (
+            <p className="text-sm text-ink-900/60 dark:text-chalk/60">
+              {afterRunsPerGame.toFixed(2)} runs / game
+            </p>
+          )}
         </div>
       </div>
-      {(scoreDelta != null || runsDelta != null) && (
-        <p className="mt-2 text-sm">
-          {scoreDelta != null && (
-            <span
-              className={
-                scoreDelta >= 0
-                  ? "text-diamond-600 dark:text-diamond-400"
-                  : "text-red-600 dark:text-red-400"
-              }
-            >
-              Score {scoreDelta >= 0 ? "+" : ""}
-              {scoreDelta.toFixed(1)}
-            </span>
-          )}
-          {runsDelta != null && (
-            <span
-              className={
-                runsDelta >= 0
-                  ? "ml-2 text-diamond-600 dark:text-diamond-400"
-                  : "ml-2 text-red-600 dark:text-red-400"
-              }
-            >
-              Runs/game {runsDelta >= 0 ? "+" : ""}
-              {runsDelta.toFixed(2)}
-            </span>
-          )}
+      {runsDelta != null && (
+        <p
+          className={`mt-4 text-sm font-semibold tabular-nums ${
+            runsDelta >= 0 ? "text-grass-700 dark:text-grass-400" : "text-stitch-600"
+          }`}
+        >
+          Runs / game {runsDelta >= 0 ? "+" : ""}
+          {runsDelta.toFixed(2)}
         </p>
       )}
     </div>
